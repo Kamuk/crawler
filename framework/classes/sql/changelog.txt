@@ -1,0 +1,100 @@
+    Legend:
+[+] Added feature
+[*] Improved/changed
+[-] Bug fixed (I hope)
+
+
+
+Version 2.5
+[*] lastInsertId for MySQL modified. Where I found that old and ugly code? And why no one point on this before?
+
+
+
+Version 2.4
+[+] If option $.bQuoteTables specified while creating object, the table name will be quoted in 
+	lastInsertId, setLastInsertId and leftJoin methods. Quote characters for all SQL servers defined.
+[+] For setLastInsertId method you can specify column name with identity.
+
+
+
+Version 2.3
+[-] Bugfix: exception 'junction outside context' occure during save query info with junction-option in log.
+[-] Bugfix: method .clear didn't clear auto cache files if object was created without $.bCacheAuto(1) option.
+[*] Little optimizations.
+
+
+
+Version 2.1
+[*] For new classes version number changed to 2.x (=
+[-] Fixed bug with sql tainting while saving query's info to log.
+[-] Fixed bug with incorrect method name in class MySqlComp.
+
+
+
+Version 1.3
+[*] Erusage class don't requered anymore.
+
+
+
+Version 1.2 (beta 2)
+[*] Internal changes: added class SqlInfo which collect and store all queries' statistics.
+[+] Code which print statistics moved to separate class SqlLog so if you don't want to print this info
+    you can even don't ^use[] this class and save some memory.
+[*] Compatibility methods (with old name convention) were moved to separate classes (MySqlComp & Co).
+    So if you have code with old method calls (ex: .last_insert_id[] & Co) you have to use MySqlComp class
+    instead of MySql class, in other cases just use class MySql (less code included and some memory saved).
+[-] Some bugs were fixed.
+
+
+
+Version 1.1 (beta 1)
+[*] Old sql classes were rewrited. New classes run a bit faster and use less memory.
+    But new classes hadn't full backward compatibility with old ones.
+    If you want to use these classes on your old projects you have to:
+
+    - rename constructor from 'init' to 'create' and change constructor's options: 
+      $.is_debug(1) => $.bDebug(true|1)
+      $.cache_dir[...] => $.sCacheDir[...]
+      $.cache_interval(..) => $.dCacheInterval(..)
+      ... (check comments before constructor in Sql.p)
+
+    - sql object havn't methods like 'printStatistics' anylonger so if you want to save queries' info to log you need to do next:
+      - create object $oSqlLog[^SqlLog::create[$oSql]]
+      - call method ^oSqlLog.log[] and move here all options which was in method 'printStatistics'
+      - rename options:
+        $.file[...] => $.sFile[...]
+        $.debug_time_limit(..) => $.iQueryTimeLimit(..)
+        $.debug_queries_limit(..) => iQueriesLimit(..)
+        $.debug_result_limit(..) => $.iQueryRowsLimit(..)
+        add parameter $.bAll(true|1) in case if you want to save info about all queries but not only about quesies with 'problems'
+
+    - in queries with caching change cache options (optional, most old options still work fine in new classes):
+      $.file[...] => $.sFile[...]
+      $.is_force(1) => $.bForce(true|1)
+      $.cache_interval(..) => $.dInterval(..)
+      $.cache_expiration_time[..] => $.dtExpirationTime[..]
+      ... (read comments before void method in Sql.p)
+      
+    more details you can find in file upgrade.txt.
+
+[+] Auto-cache feature was added.
+    You can specify $.bAutoCache(true|1) option while create sql object and all queries
+    executed through this object (except void) will be cached in files automatically (file names 
+    will be generated as ^math:md5[your query]=limit=offset). For queries which get different data
+    every time you can disable auto-caching feature using $.bAuto(false|0) query cache option.
+    In case if you don't want to cache all queries but want to cache only some of them, you can
+    just specify $.bAuto(true|1) cache option for those queries and it'll be cached.
+
+[*] Log file format slightly changed (more compact now).
+
+[*] While generating log file with all queries, the queries which exceed limits marked as well.
+
+[-] Bugs in _getQueryDetail were fixed.
+
+
+
+CAUTION:
+	For using query caching parser 3.1.6sp2, 3.2.1sp2 or higher required.
+	For older versions you must change $.encloser[] in methods load and save (from '"' to '^#7F' for example).
+	
+	

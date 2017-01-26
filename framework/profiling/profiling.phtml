@@ -1,0 +1,32 @@
+$FORMAT[%.03f]
+
+<div style="^rem{ *** position: fixed; right: 0; bottom: 0; *** } widht: 100%; height: auto; overflow: auto; padding: 5px 25px; background: #FFF; opacity: 0.99; font: 9pt monospace; z-index: -1;">	
+	<table class="table table-condensed table-hover">
+	<thead>
+	<tr>
+		<td style="width: 150px;">point</td>
+		<td></td>
+		<td style="width: 150px;">time</td>
+		<td style="width: 150px;">utime</td>
+		<td style="width: 150px;">stime</td>
+		<td style="width: 100px;">mem.blocks</td>
+		<td style="width: 150px;">mem.used</td>
+		<td style="width: 150px;">mem.free</td>
+		<td style="width: 150px;">mem.total</td>		
+		<td style="width: 50px;">queries</td>
+	</tr>
+	</thead>
+	
+	^foreach[$Rusage:_logs;log]{
+		^include[${CONFIG:sProfilingPath}/_log.phtml]
+	}
+
+	<tfoot>
+		$log[
+			$.command[total]
+			$.stat[$Rusage:total]
+		]
+		^include[${CONFIG:sProfilingPath}/_log.phtml]
+	</tfoot>
+	</table>
+</div>

@@ -1,0 +1,23 @@
+production:
+	adapter: mysql
+	database: 
+	username: 
+	password: 
+	host: 	 
+	charset: utf8
+
+dev:
+	adapter: mysql
+	database: crawler
+	username: root
+	host: 127.0.0.1
+	charset: utf8
+	
+test:
+  adapter: mysql
+	database: 
+	username: 
+	password: 
+	host:  
+	charset: utf8
+	

@@ -1,0 +1,184 @@
+##############################################################################
+#	
+##############################################################################
+
+@CLASS
+WinestyleGoods
+
+@OPTIONS
+locals
+
+@BASE
+ActiveModel
+
+
+
+##############################################################################
+@auto[]
+	^BASE:auto[]	
+
+	^field[article][
+		$.type[string]
+	]
+	^field[types][
+		$.type[string]
+	]
+	^field[region][
+		$.type[string]
+	]
+	^field[subregion][
+		$.type[string]
+	]
+	^field[country][
+		$.type[string]
+	]
+	^field[price][
+		$.type[double]
+	]
+	^field[rating][
+		$.type[double]
+	]
+	^field[color_wine][
+		$.type[string]
+	]
+	^field[type_wine][
+		$.type[string]
+	]
+	^field[kind_wine][
+		$.type[string]
+	]
+	^field[brand][
+		$.type[string]
+	]
+	^field[volume][
+		$.type[string]
+	]
+	^field[excert][
+		$.type[string]
+	]
+	^field[class][
+		$.type[string]
+	]
+	^field[fortress][
+		$.type[string]
+	]
+	^field[taste][
+		$.type[string]
+	]
+	^field[type_of_packaging][
+		$.type[string]
+	]
+	^field[name][
+		$.type[string]
+	]
+	^field[factory][
+		$.type[string]
+	]
+	^field[year][
+		$.type[string]
+	]
+	^field[price_old][
+		$.type[double]
+	]
+	^field[stock][
+		$.type[string]
+	]
+	^field[dt_update][
+		$.type[date]
+	]
+	^field[gastronomy][
+		$.type[string]
+	]
+	^field[fragrance][
+		$.type[string]
+	]
+	^field[color][
+		$.type[string]
+	]
+	^field[facts][
+		$.type[string]
+	]
+	^field[suitable_for][
+		$.type[string]
+	]
+	^field[grapes][
+		$.type[string]
+	]
+	^field[site_brand][
+		$.type[string]
+	]
+	^field[color_depth][
+		$.type[string]
+	]
+	^field[opacity][
+		$.type[string]
+	]
+	^field[temperature][
+		$.type[string]
+	]
+	^field[site_factory][
+		$.type[string]
+	]
+	^field[style][
+		$.type[string]
+	]
+	^field[composition][
+		$.type[string]
+	]
+	^field[type_beer][
+		$.type[string]
+	]
+	^field[type_curing][
+		$.type[string]
+	]
+	^field[filtration][
+		$.type[string]
+	]
+	^field[type_barrels][
+		$.type[string]
+	]
+	^field[supplements][
+		$.type[string]
+	]
+	^field[taste_description][
+		$.type[string]
+	]
+	^field[about_factory][
+		$.type[string]
+	]
+	^field[density][
+		$.type[string]
+	]
+	^field[technology_maturation][
+		$.type[string]
+	]
+	^field[type_fermentation][
+		$.type[string]
+	]
+	^field[hop_content][
+		$.type[string]
+	]
+	^field[pack_items][
+		$.type[string]
+	]
+	^field[aging_in_barrels][
+		$.type[string]
+	]
+	^field[views_beverage][
+		$.type[string]
+	]
+	^field[basis][
+		$.type[string]
+	]
+
+#end @auto[]
+
+
+
+##############################################################################
+@before_save[]
+	^BASE:before_save[]
+	
+	$self.dt_update[^date::now[]]
+	
+#end @before_save[]

@@ -1,0 +1,9 @@
+[submodule "classes/lib"]
+	path = classes/lib
+	url = git@ddac.beanstalkapp.com:/ddac/lib.git
+[submodule "classes/img"]
+	path = classes/img
+	url = git@ddac.beanstalkapp.com:/ddac/lib-img.git
+[submodule "classes/sql"]
+	path = classes/sql
+	url = git@ddac.beanstalkapp.com:/ddac/lib-sql.git

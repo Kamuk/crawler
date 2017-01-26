@@ -1,0 +1,15 @@
+production:
+	adapter: mysql
+	database: 
+	username: 
+	password: 
+	host: 	 
+	charset: utf8
+
+dev:
+	adapter: mysql
+	database: 
+	username: 
+	password: 
+	host:  
+	charset: utf8

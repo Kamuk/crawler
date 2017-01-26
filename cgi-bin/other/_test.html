@@ -1,0 +1,918 @@
+#<!--
+###########################################################################
+@main[]
+<h1>Parser 3.x test page</h1>
+<p>Если вы видите эту страницу, значит вы установили парсер и пытаетесь его протестировать :)</p>
+<p>Чтобы увидеть полные пути к конфигурационным файлам и DOCUMENT_ROOT - закоментируйте метод postprocess[]</p>
+<p>Если что-либо выделено красным цветом, значит или что-то настроено неверно или автоматическое определение невозможно 
+(это относится к поиску файлов библиотек и кодовых таблиц при заданных относительных путях).</p>
+<hr />
+
+^try{
+	$status_rusage_begin[$status:rusage]
+	$status_memory_begin[$status:memory]
+}{
+	$exception.handled(1)
+}
+
+<h2>Глобальные переменные, заданые в конфигурационном auto.p</h2>
+
+<h3>^$CHARSETS:</h3>
+^if($CHARSETS && $CHARSETS is "hash"){
+	<table cellpadding="5" cellspacing="0" border="1">
+	^CHARSETS.foreach[sKey;sValue]{
+		<tr>
+			<td>$sKey</td>
+			<td>$sValue (^check_system_file[$sValue])</td>
+		</tr>
+	}
+	</table>
+}{
+	^error[Не определен хеш с кодовыми таблицами (^$CHARSETS).]
+	<br />Возможно у вас не обрабатывается конфигурационный auto.p (тот что по умолчанию должен находится рядом с исполняемым файлом).
+	<br />Чтобы убедиться в том, что он обрабатывается, добавьте инструкцию
+	^^throw[^;check auto.p execution] в его метод &#64^;auto[] и перезагрузите страницу.
+	Появление ошибки после её перезагрузки будет свидетельствовать о том, что он обрабатывается.
+}
+
+<h3>^$SQL:</h3>
+^if($SQL && $SQL.drivers && $SQL.drivers is "table"){
+	^try{
+		<table cellpadding="5" cellspacing="0" border="1">
+		<tr>
+			<th>protocol</th>
+			<th>parser driver</th>
+			<th>sql client library</th>
+		</tr>
+		^SQL.drivers.menu{
+			<tr>
+				<td>$SQL.drivers.protocol</td>
+				<td>^if(def $SQL.drivers.driver){$SQL.drivers.driver (^check_system_file[$SQL.drivers.driver])^if(!^check_p3_sql_lib_name[$SQL.drivers.driver;parser3]){<br />^error[уверены, что указан верный файл?]}}{<br />}</td>
+				<td>^if(def $SQL.drivers.client){$SQL.drivers.client (^check_system_file[$SQL.drivers.client])}{<br />}</td>
+			</tr>
+		}
+		</table>
+	}{
+		$exception.handled(1)
+		^error[Неверная структура таблицы ^$SQL.drivers]
+		<br />Возможно Вы редактировали конфигурационный файл и у Вас символы табуляции заменились пробелами.
+		<br />Содержимое таблицы:
+		^printTable[$SQL.drivers]
+	}
+}{
+	^error[Не определена таблица с драйверами (^$SQL.drivers)]
+	<br />Возможно у вас не обрабатывается конфигурационный auto.p
+}
+
+<p>
+^info[DOCUMENT_ROOT]: ^if(^trim[$env:DOCUMENT_ROOT;/] eq $script_dir){совпадает с директорией тестового скрипта}{^error[^if(!def $env:DOCUMENT_ROOT){не определен}{&laquo^;кривой&raquo^; или скрипт находится не в корне веб пространства}]}^if(def $env:DOCUMENT_ROOT){ ($env:DOCUMENT_ROOT)}<br />
+^info[Путь к скрипту]: $script_dir<br />
+^info[^$response:charset]: ^if(def $response:charset){$response:charset}{^error[Не задан. Вы работаете в UTF8?]}<br />
+^info[^$request:charset]: ^if(def $request:charset){$request:charset}{^error[Не задан. Вы работаете в UTF8?]}<br />
+^info[^$request:uri]: $request:uri<br />
+^info[^$request:query]: $request:query^if(def $request:query){ (для получения параметров пользователя используйте ^$form)}<br />
+^info[^$SQL.connect-string]: ^if(def ${SQL.connect-string}){определена}{^info[не определена]}<br />
+^info[^$MAIL.SMTP]: ^if(def $MAIL.SMTP){определена}{не определена}<br />
+^info[^$CLASS_PATH]:
+^if($CLASS_PATH is "table"){
+	<br />
+	^try{
+		<table cellpadding="5" cellspacing="0" border="1">
+		^CLASS_PATH.menu{
+			<tr>
+				<td>$CLASS_PATH.path</td>
+				<td>^check_dir[$CLASS_PATH.path]</td>
+			</tr>
+		}
+		</table>
+	}{
+		$exception.handled(1)
+		^error[Неверная структура переменной ^$CLASS_PATH.]<br />В этой переменной должна быть строка или именованая таблица со столбцом path.<br />
+	}
+}{
+	^if(def $CLASS_PATH){$CLASS_PATH &mdash^; ^check_dir[$CLASS_PATH]}{^info[не определен]}<br />
+}
+</p>
+
+
+
+<h2>Демонстрация работы парсера</h2>
+
+<h3>Демонстрация работы с cookie (класс <a href="http://www.parser.ru/docs/lang/cookieclass.htm">^$cookie</a>)</h3>
+<p>
+Чтение ^$cookie:test: ^if(def $cookie:test){$cookie:test}{не определена}<br />
+Запись в cookie значения ABC ^$cookie:test[ABC]$cookie:test[ABC] (нажмите Reload для проверки)<br />
+</p>
+
+
+
+<h3>Демонстрация работы математических операторов (класс <a href="http://www.parser.ru/docs/lang/mathclass.htm">^$math</a>)</h3>
+<p>
+$math_string[СтРоКа]
+$math_salt[^$apr1^$]
+
+$iNum1(^math:random(9)+1)
+$iNum2(^math:random(9)+1)
+^^eval($iNum1+$iNum2): ^eval($iNum1+$iNum2)<br />
+^^math:random(1000): ^math:random(1000)<br />
+^^math:log(1000): ^try_exec{^math:log(1000)}<br />
+^^math:log10(1000): ^try_exec{^math:log10(1000)}<br />
+^^math:uuid[]: ^try_exec{^math:uuid[]}<br />
+^^math:uid64[]: ^try_exec{^math:uid64[]}<br />
+^^math:md5[$math_string]: ^try_exec{^math:md5[$math_string]}<br />
+^^math:crypt[$math_string;$math_salt]: ^try_exec{^math:crypt[$math_string;$math_salt]}<br />
+^^math:crc32[$math_string]: ^try_exec{^math:crc32[$math_string]}<br />
+</p>
+
+
+
+<h3>Работа со строками (класс <a href="http://www.parser.ru/docs/lang/stringclass.htm">^$string</a>)</h3>
+<p>
+$upper[ББ]
+$lower[бб]
+$mixed[Бб]
+Задание ^$str[АбвГде]$str[АбвГде]<br />
+Длина строки ^^str.length[]: ^str.length[]<br />
+Строка в верхнем регистре ^^str.upper[]: ^str.upper[]^if(^mixed.upper[] ne $upper){ [^error[некорректное преобразование к верхнему регистру]]}<br />
+Строка в нижнем регистре ^^str.lower[]: ^str.lower[]^if(^mixed.lower[] ne $lower){ [^error[некорректное преобразование к нижнему регистру]]}<br />
+Первые 2 символа строки ^^str.left(2): ^str.left(2)<br />
+Последние 3 символа строки ^^str.right(3): ^str.right(3)<br />
+2-4 символы строки ^^str.mid(1^;3): ^str.mid(1;3)<br />
+Поиск символа 'б' в строке ^^str.pos[б]: ^str.pos[б]<br />
+Поиск символа 'б' в строке начиная со 2 позиции ^^str.pos[б](2): ^try_exec{^str.pos[б](2)}<br />
+Поиск символа 'X' в строке ^^str.pos[X]: ^str.pos[X]<br />
+Замена комбинации символов 'вГ' на XX с помощью  ^^str.match[вГ][]{XX}: ^str.match[вГ][]{XX}<br />
+$repl[^table::create{a	b
+в	Y
+Г	Z}]
+Замена комбинации символов 'в' на 'Y', 'Г' на 'Z' с помощью ^^str.replace[^$repl]: ^str.replace[$repl]<br />
+^^str.trim[both;е]: ^try_exec{^str.trim[both;е]}<br />
+^^str.trim[start;е]: ^try_exec{^str.trim[start;е]}<br />
+^^str.trim[end;е]: ^try_exec{^str.trim[end;е]}<br />
+^^str.trim[left;е]: ^try_exec{^str.trim[left;е]}<br />
+^^str.trim[right;е]: ^try_exec{^str.trim[right;е]}<br />
+^^str.base64[]: ^try_exec{$sBase64[^str.base64[]]$sBase64}<br />
+^if(def $sBase64){
+#	^^string:base64[$sBase64]: ^try_exec{^string:base64[$sBase64]}
+}
+^^str.js-escape[]: ^try_exec{$sEscaped[^str.js-escape[]]$sEscaped}<br />
+^if(def $sEscaped){
+	^^str:js-unescape[$sEscaped]: ^try_exec{^string:js-unescape[$sEscaped]}<br />
+}
+</p>
+
+
+<h3>Работа с классом <a href="http://www.parser.ru/docs/lang/inetclass.htm">^$inet</a></h3>
+^^inet:aton[10.0.0.2]: ^try_exec{^inet:aton[10.0.0.2]}<br />
+^^inet:aton[192.168.1.5]: ^try_exec{^inet:aton[192.168.1.5]}<br />
+^^inet:ntoa(167772162): ^try_exec{^inet:ntoa(167772162)}<br />
+^^inet:ntoa(3232235781): ^try_exec{^inet:ntoa(3232235781)}<br />
+
+
+<h3><a name="forms">Чтение</a> значений из формы (класс <a href="http://www.parser.ru/docs/lang/formclass.htm">^$form</a>)</h3>
+<p>
+^$form:a: ^if(def $form:a){$form:a}{не определено}<br />
+Safe преобразование ^$form:a в целое число: ^^form:a.int(1): ^form:a.int(1)<br />
+^if($form:tables.b){
+	^form:tables.b.menu{
+		^form:tables.b.line[] значение ^$form:b: $form:tables.b.field
+	}[<br />]
+}{
+	^$form:b не определено
+}
+<br />
+^$form:qtail: ^if(def $form:qtail){$form:qtail}{не определено}<br />
+^if(!def $form:a){
+	<a href="?a=321&b=^taint[uri][А]&b=^taint[uri][Б]&b=^taint[uri][ВГД]?ABC#forms">идем сюда чтобы проверить чтение значений формы</a>
+}
+</p>
+
+<h3>Задание и вывод значений у объекта-хэша (класс <a href="http://www.parser.ru/docs/lang/hashclass.htm">^$hash</a>)</h3>
+<p>
+<pre>
+^$hash1[
+&nbsp^; &nbsp^;^$.a[1]
+&nbsp^; &nbsp^;^$.b[2]
+&nbsp^; &nbsp^;^$.c[3]
+]
+^^hash1.foreach[key;value]{
+&nbsp^;&nbsp^;^$key=^$value
+}[&lt^;br /&gt^;]
+</pre>
+$hash1[
+	$.a[1]
+	$.b[2]
+	$.c[3]
+]
+^hash1.foreach[key;value]{
+	$key=$value
+}[<br />]
+
+<br /><br />
+Проверка наличия в хеше элементов с ключём 'a' (^^hash1.contains[a]):
+^try_exec{^if(^hash1.contains[a]){содержит элемент с ключем 'a'}{^error[не содержит элемент с ключем 'a']}}
+</p>
+
+
+<h3>Задание и вывод значений у объекта-таблицы (класс <a href="http://www.parser.ru/docs/lang/tableclass.htm">^$table</a>)</h3>
+<pre>^$tbl1[^^table::create{name	col1	col2
+Вася	3	5
+Дима	4	14}]</pre>
+$tbl1[^table::create{name	col1	col2
+Вася	3	5
+Дима	4	14}]
+Количество строк таблицы ^$tbl1: ^tbl1.count[]<br />
+$col[^tbl1.columns[]]
+Количество столбцов таблицы ^$tbl1: ^col.count[]<br />
+Вывод названий столбцов таблицы:<br />
+^printTable[$col]
+
+<p>
+Вывод значений таблицы ^$tbl1:<br />
+^printTable[$tbl1]
+</p>
+
+<pre>^$tbl2[^^table::create{name	col1	col2
+Вова	3	44}]</pre>
+$tbl2[^table::create{name	col1	col2
+Вова	3	44}]
+Количество строк таблицы ^$tbl2: ^tbl2.count[]<br />
+
+
+<p>
+join таблицы ^$tbl1 к таблице ^$tbl2 [^^tbl2.join[^$tbl1]]<br />
+^tbl2.join[$tbl1]
+Количество строк таблицы ^$tbl2 ^^tbl2.count[]: ^tbl2.count[]<br />
+Вывод полученой таблицы:<br />
+^printTable[$tbl2]
+</p>
+
+<p>select и вывод строк таблицы у которых значения в столбце col1 равны 3: ^^tbl2.select(^$tbl2.col1 == 3)<br />
+^printTable[^tbl2.select($tbl2.col1 == 3)]
+</p>
+
+
+<p>Получение из таблицы - хеша таблиц, где в качестве ключа выступает значение col1: ^$hData[^^tbl2.hash[col1][^$.distinct[tables]]]<br />
+^try{
+	$hData[^tbl2.hash[col1][$.distinct[tables]]]
+	<p>Вывод полученного хеша таблиц:
+	<table cellpadding="2" cellspacing="0" border="1" width="35%">
+	<tr align="center">
+		<th>Ключ</th>
+		<th>Значение</th>
+	</tr>
+	^hData.foreach[sKey;tValue]{
+		<tr>
+			<td>$sKey</td>
+			<td>^printTable[$tValue;100%]</td>
+		</tr>
+	}
+	</table>
+	</p>
+}{
+	$exception.handled(1)
+	^error[Используется версия парсера до 3.0.8, которая не имеет данного метода]
+}
+</p>
+
+
+<p>Получение из таблицы - хеша строк, где в качестве ключа выступает значение столбца col2, а в качестве значения &mdash^; name: ^$hData[^^tbl2.hash[col2^;name][^$.type[string]]]<br />
+^try{
+	$hData[^tbl2.hash[col2;name][$.type[string]]]
+	<p>Вывод полученного хеша строк:
+	<table cellpadding="2" cellspacing="0" border="1">
+	<tr align="center">
+		<th>Ключ</th>
+		<th>Значение</th>
+	</tr>
+	^hData.foreach[sKey;sValue]{
+		<tr>
+			<td>$sKey</td>
+			<td>$sValue</td>
+		</tr>
+	}
+	</table>
+	</p>
+}{
+	$exception.handled(1)
+	^error[Используется версия парсера до 3.2.2, которая не имеет данного метода]
+}
+</p>
+
+
+<h3>Работа с датами (класс <a href="http://www.parser.ru/docs/lang/dateclass.htm">^$date</a>)</h3>
+<p>
+^$now[^^date::now[]]<br />
+$now[^date::now[]]
+^$now.day/^$now.month/^$now.year ^${now.hour}:^${now.minute}:^$now.second: $now.day/$now.month/$now.year ${now.hour}:${now.minute}:$now.second<br />
+^$now.week: ^try_exec{$now.week}<br />
+^$now.weekyear: ^try_exec{$now.weekyear}<br />
+Вывод сегодняшней даты в sql формате ^^now.sql-string[]: ^now.sql-string[]<br />
+Вывод сегодняшней даты в виде UNIX timestamp ^^now.unix-timestamp[]: ^try_exec{^now.unix-timestamp[]}<br />
+Вывод сегодняшней даты в виде строки в формате GMT ^^now.gmt-string[]: ^try_exec{^now.gmt-string[]}<br />
+Номер последнего дня текущего месяца ^^now.last-day[]: ^try_exec{^now.last-day[]}<br />
+^now.roll[day](-5)
+Сдвиг даты на 5 дней назад ^^now.roll[day](-5): ^printDate[$now]<br />
+^now.roll[day](30)
+Сдвиг полученой даты на 30 дней вперед ^^now.roll[day](30): ^printDate[$now]<br />
+</p>
+
+
+
+
+<h3>Работа с файлами (класс <a href="http://www.parser.ru/docs/lang/fileclass.htm">^$file</a>)</h3>
+<p>
+$save_table_name[_test.cfg]
+$fname[$save_table_name]
+Запись таблицы ^$tbl1 в файл $save_table_name (^^tbl1.save[$fname]):
+$no_file(0)
+^try{
+	^tbl1.save[$fname]
+	^info[файл успешно создан]
+}{
+	^if($exception.type eq "file.access"){
+		$exception.handled(1)
+		$no_file(1)
+		^error[нет доступа для записи файла]
+	}
+}
+<br />
+^^file:dirname[/$save_table_name]: ^try_exec{^file:dirname[/$save_table_name]}<br />
+^^file:basename[/$save_table_name]: ^try_exec{^file:basename[/$save_table_name]}<br />
+^^file:justname[/$save_table_name]: ^try_exec{^file:justname[/$save_table_name]}<br />
+^^file:justext[/$save_table_name]: ^try_exec{^file:justext[/$save_table_name]}<br />
+
+</p>
+^if(!$no_file){
+	<p>Получение параметров сохраненного файла ^$fstat[^^file::stat[$fname]]:<br />
+	$fstat[^file::stat[$fname]]
+	Размер файла, байт [^$fstat.size]: $fstat.size<br />
+	cdate: $fstat.cdate.day/$fstat.cdate.month/$fstat.cdate.year<br />
+	adate: ^printDate[$fstat.adate]<br />
+	mdate: ^printDate[$fstat.mdate]<br />
+	</p>
+		
+	<p>
+	Загрузка данных в таблицу ^$tbl3 из файла $save_table_name и вывод (^$tbl3[^^table::load[$fname]]):<br />
+	^if(-f $fname){
+		$tbl3[^table::load[$fname]]
+		^printTable[$tbl3]
+	}
+	</p>
+	
+	
+	<p>Копирование файла (^^file:copy[$fname^;_copy.cfg]):
+	^try_exec{
+		^file:copy[$fname;_copy.cfg]^info[выполнено]
+		^try{
+			^file:delete[_copy.cfg]
+		}{
+			$exception.handled(1)
+		}
+	}
+	</p>
+	
+	<p>Удаление файла (^^file:delete[$fname]):
+		^try{
+			^file:delete[$fname]
+			^info[выполнено]
+		}{
+			$exception.handled(1)
+			^error[ошибка удаления файла]
+		}
+	</p>
+}
+
+
+<h3>Работа с классом <a href="http://www.parser.ru/docs/lang/hashfileclass.htm">^$hashfile</a></h3>
+$hashfile_name[_test]
+<p>Создаем объект: ^$hf [^$hf[^^hashfile::open[$hashfile_name]]]: 
+^try{
+	$hf[^hashfile::open[$hashfile_name]]
+	^info[объект успешно создан]<br />
+
+	$expires(3)
+	$hash1[^hf.hash[]]
+	Количество записей: ^hash1._count[]<br />
+
+	^try{
+		$key[^math:uuid[]]
+	}{
+		$exception.handled(1)
+		$key[^math:random(999999999)]
+	}
+	Добавление новой записи ($key) на $expires дня:
+	$value[^math:random(999999999)]
+	<pre>
+	^$hf.[$key][
+	 &nbsp^; &nbsp^;^$.value[$value]
+	 &nbsp^; &nbsp^;^$.expires($expires)
+	]
+	</pre>
+	$hf.[$key][
+		$.value[$value]
+		$.expires($expires)
+	]
+
+	Очистка hashfile от устаревших записей (^^hf.cleanup[]):
+	^try_exec{^hf.cleanup[]^info[выполнено]}<br /><br />
+
+	$limit(5)
+	Вывод содержимого (максимум $limit записей):<br />
+	$cnt(0)
+	^hf.foreach[k;v]{^if($cnt < $limit){
+		$k=^v.format[%d]<br />
+		^cnt.inc(1)
+	}}
+	<br />
+	
+	Закрытие файлов и снятие блокировок (^^hf.release[]):
+	^try_exec{^hf.release[]^info[выполнено]}<br />
+}{
+	$exception.handled(1)
+	^if($exception.type eq "file.access"){
+		^error[нет доступа для записи файла]
+	}{
+		^error[невозможно создать объект]
+	}
+}
+</p>
+
+
+<h3>Работа с переменными окружения (класс <a href="http://www.parser.ru/docs/lang/envclass.htm">^$env</a>)</h3>
+$env_table[^table::create{name	description
+SERVER_NAME	DNS имя сервера
+QUERY_STRING	Для получения параметров используйте класс ^$form
+HTTP_REFERER	Откуда пришел посетитель (броузер может не передавать эту информацию)
+HTTP_USER_AGENT	Строка USER_AGENT броузера посетителя
+HTTP_X_FORWARDED_FOR	Обычно заполнена если пришли через прокси
+REMOTE_HOST
+REMOTE_ADDR	IP адрес посетителя
+PARSER_VERSION	Версия парсера (если не определена, то до 3.1.5)
+}]
+
+$is_env_defined(0)
+<table cellpadding="2" cellspacing="0" border="1">
+	<tr>
+		<th>Переменная</th>
+		<th>Значение</th>
+		<th><a href="http://hoohoo.ncsa.uiuc.edu/cgi/env.html">Комментарий</a></th>
+	</tr>
+	^env_table.menu{
+		<tr>
+			<td>$env_table.name</td>
+			<td>^if(def $env:[$env_table.name]){$env:[$env_table.name]^is_env_defined.inc(1)}{<br />}</td>
+			<td>^if(def $env_table.description){$env_table.description}{<br />}</td>
+		</tr>
+	}
+</table>
+^if(!$is_env_defined){
+	<p>^error[Не определена ни одна из переменных окружения]</p>
+}
+
+
+
+
+<h3>Работа с SQL</h3>
+<p>
+^if(def ${SQL.connect-string}){
+	$sSqlQuery[SELECT 2+2^if(^SQL.connect-string.left(6) eq "oracle"){ FROM DUAL}]
+	^^int:sql{$sSqlQuery}:
+	^try{
+		^connect[$SQL.connect-string]{
+			$iSqlResult(^int:sql{$sSqlQuery}[$.default{0}])
+		}
+		$iSqlResult^if($iSqlResult != 4){ [^error[Хм. Странно считает ваш SQL сервер 2+2...]]}<br />
+	
+		^if(^SQL.connect-string.left(5) eq "mysql"){
+			^rem{ *** пробуем определить серверную кодировку у MySQL *** }
+			<p>Определение серверной кодировки MySQL:
+			^try{
+				$sSqlString[^SQL.connect-string.match[\?.*][]{}]
+				^connect[$sSqlString]{
+					$tVar[^table::sql{SHOW VARIABLES}]
+					$sRequestCharset[^request:charset.upper[]]
+					^if(^tVar.locate(
+						(
+							^tVar.[Variable_name].upper[] eq "CHARACTER_SET"
+							|| ^tVar.[Variable_name].upper[] eq "CHARACTER_SET_CLIENT"
+						)
+						&& def $tVar.Value
+					)){
+						$sServerCharset[^tVar.Value.upper[]]
+						$tReplaceCharset[^table::create{from	to^#0AKOI8_RU	KOI8-R}]
+						$sServerCharset[^sServerCharset.replace[$tReplaceCharset]]
+						^if($sRequestCharset ne $sServerCharset){
+							^$request:charset ($request:charset) не совпадает с переменной MySQL сервера 
+							character_set/character_set_client (SQL сервер вернул значение ^info[$tVar.Value]).<br />
+							^if($sServerCharset eq "LATIN1"){
+								Кодировка сервера &laquo^;по умолчанию&raquo^; (latin1) не настроена для работы с русскими буквами.
+								В случае, если вы планируете хранить в БД тексты на русском языке и используется MySQL сервер 
+								версии 4.0 или выше, вы можете сами указывать кодировку после подключения согласно 
+								<a href="http://dev.mysql.com/doc/refman/5.0/en/charset-connection.html">документации</a>
+								(выполняя после каждого соединения комманду "SET CHARACTER SET charset_name").
+								Если используется более ранняя версия MySQL, то вам нужно попросить вашего администратора настроить MySQL сервер.
+							}{
+								Если вы уверены, что символы из кодировки $sRequestCharset могут быть без потери преобразованы
+								в кодировку $sServerCharset и обратно, то в строке соединения вам нужно задать параметр: 
+								^info[?ClientCharset=$sServerCharset], при этом парсер будет перекодировать в указанную кодировку отправляемые MySQL серверу 
+								запросы (из кодировки ^$request:charset), а также перекодировать полученные от него результаты обратно.
+								^if($sRequestCharset eq "WINDOWS-1251" && $sServerCharset eq "KOI8-R"){
+									<br />Однако вместо этого лучше использовать параметр ^info[?charset=cp1251_koi8], который 
+									заставит выполнять преобразования кодировок SQL сервер^if(^SQL.connect-string.match[charset=cp1251_koi8][i]){ (именно этот способ перекодирования используется в настоящий момент в строке соединения)}.
+								}
+							}
+						}{
+							^$request:charset ($request:charset) и SQL переменная character_set ($tVar.Value) совпадают,
+							следовательно указывать дополнительные параметры в строке соединение не требуется.
+						}
+					}{
+						^error[SQL сервер ничего не сообщает о наличии у него переменных с именами "character_set" или "character_set_client"]
+					}
+				}
+			}{
+				$exception.handled(1)
+				^error[MySQL сервер неадекватно реагирует на комманду "SHOW VARIABLES"]
+			}
+			</p>
+		}
+
+		^rem{ *** пробуем преобразовать строку к верхнему регистру средствами SQL сервера *** }
+		$sLower[абвгдеёжзийклмнопрстуфхцчшщъыьэюя]
+		$sUpper[^sLower.upper[]]
+		<p>SQL преобразование строки с русским алфавитом к верхнему регистру:
+		^try{
+			^connect[$SQL.connect-string]{
+				$sSqlResult[^string:sql{SELECT UPPER('$sLower')^if(^SQL.connect-string.left(6) eq "oracle"){ FROM DUAL}}[$.default{}]]
+			}
+			^if($sUpper eq $sSqlResult){
+				преобразование прошло корректно, скорее всего кодировки настроены верно.
+			}{
+				^error[преобразование было произведено не корректно.]
+				<br />Результат: '$sSqlResult' (должно быть: '$sUpper').
+			}
+		}{
+			<b>синтаксис запроса не подходит для вашего SQL сервера.</b>
+			$exception.handled(1)
+		}
+		
+		</p>
+		
+	}{
+		^if($exception.type eq "sql.connect"){
+			^error[Не удается подсоединиться к SQL серверу.] Возможно неверно заданы имя/пароль в строке соединения.
+			$exception.handled(1)
+		}{
+			^if($exception.type eq "sql.execute"){
+				^error[Не удается выполнить SQL запрос], хотя соединение прошло успешно. Непонятки, ибо запрос прост как 2+2
+				$exception.handled(1)
+			}{
+				^error[Что-то непонятное с SQL.] Возможно не положены куда надо драйвера.
+				<br />Сообщение об ошибке:
+				<blockquote>
+					^taint[html][$exception.comment]
+					^if(def $exception.source){<br /><b>^taint[html][$exception.source]</b>}
+				</blockquote>
+				$exception.handled(1)
+			}
+		}
+	}
+}{
+	^info[Не определена переменная ^$SQL.connect-string,] проверка корректности работы с базой данных невозможна.
+}
+</p>
+
+
+<h3>Работа с XML</h3>
+<p>
+Создание объекта типа xdoc:<br />
+^try{
+	$xml_txt[<?xml version="1.0" encoding="$request:charset" ?>
+<document>
+	<t attr="привет" n="123"/>
+	<t attr="пока" n="234" n2="xxx"/>
+	<text>текст</text>
+</document>]
+	<pre>
+	^taint[html][^$document[^^xdoc::create{$xml_txt}]]
+	</pre>
+	$document[^xdoc::create{$xml_txt}]
+	Объект xdoc ^info[успешно создан].<br />
+	
+	Достаем все элементы ^taint[html][<t />] ^$elements[^^document.select[//t]] :<br />
+	$elements[^document.select[//t]]
+	Количество найденых элементов: ^elements._count[]<br />
+	Вывод найденых элементов с помощью foreach (порядок произвольный):<br >
+	^elements.foreach[key;node]{
+    	nodeName: '$node.nodeName', nodeType: '$node.nodeType', кол-во аттрибутов: '^node.attributes._count[]', аттрибуты: ^node.attributes.foreach[akey;aval]{$akey='$aval.value'}[, ]
+    }[<br />]
+}{
+	^if($exception.type eq "parser.runtime"){
+		^error[Парсер-то надо ставить с поддержкой XML...] Или не подключены XML библиотеки... Это вам не хухры-мухры...
+		$exception.handled(1)
+	}
+	^if($exception.type eq "xml"){
+		$no_file(1)
+		$exception.handled(1)
+		^error[Что-то не срослось с XML-ем...] Возможно из-за кодировок...
+		<br />Сообщение об ошибке:
+		<blockquote>
+			^taint[html][$exception.comment]
+			^if(def $exception.source){<br /><b>^taint[html][$exception.source]</b>}
+		</blockquote>
+	}
+}
+</p>
+
+
+<h3>Работа с классами <a href="http://www.parser.ru/docs/lang/statusclass.htm">Status</a> и <a href="http://www.parser.ru/docs/lang/memoryclass.htm">Memory</a></h3>
+$fields[^table::create{section	name	measure	description
+rusage	utime	сек	чистое время, затраченное текущим процессом
+rusage	stime	сек	время, сколько система читала ваши файлы
+rusage	maxrss	блоков	память, занимаемая процессом
+memory	used	КБ	занято
+memory	free	КБ	свободно (скорее всего фрагментирована)
+memory	ever_allocated_since_compact	КБ	выделено с момента последней сборки мусора
+memory	ever_allocated_since_start	КБ	выделено за все время обработки запроса
+}]
+
+<p>
+	^try{
+		<table cellpadding="2" cellspacing="0" border="1">
+		<tr>
+			<th rowspan="2">Поле</th>
+			<th rowspan="2">Описание</th>
+			<th colspan="3">Значения</th>
+		</tr>
+		<tr>
+			<th>на начало работы</th>
+			<th>на текущий момент</th>
+			<th>после ^^memory:compact[]</th>
+		</tr>
+		$status_rusage_now[$status:rusage]
+		$status_memory_now[$status:memory]
+		^try{
+			$tbl1[]
+			$tbl2[]
+			$tbl3[]
+			$hash1[]
+			$document[]
+			$elements[]
+			$tables_hash[]
+			$hf[]
+			$k[]
+			$v[]
+			
+			^memory:compact[]
+			^memory:compact[]
+			$is_compact_work(1)
+			$status_rusage_compact[$status:rusage]
+			$status_memory_compact[$status:memory]
+		}{
+			$exception.handled(1)
+		}
+		^fields.menu{
+			<tr>
+				<td>^$status:${fields.section}.$fields.name^if(def $fields.measure){ ($fields.measure)}</td>
+				<td>$fields.description</td>
+				<td>^if($fields.section eq "rusage"){$status_rusage_begin.[$fields.name]}{$status_memory_begin.[$fields.name]}</td>
+				<td>^if($fields.section eq "rusage"){$status_rusage_now.[$fields.name]}{$status_memory_now.[$fields.name]}</td>
+				^if(!$is_compact_work && ^fields.line[] == 1){
+					<td rowspan="^fields.count[]">^error[В установленной версии функция не реализована.]</td>
+				}{
+					<td>^if($fields.section eq "rusage"){$status_rusage_compact.[$fields.name]}{$status_memory_compact.[$fields.name]}</td>
+				}
+			</tr>
+		}
+		</table>
+	}{
+		$exception.handled(1)
+		^error[В установленной версии не работают ^$status:rusage или ^$status:memory]
+	}
+</p>
+#end @main[]
+
+
+
+###########################################################################
+@auto[filespec]
+^if(def $filespec){
+	$script_dir[^trim[^filespec.match[/(?:\w+\.html?)?^$][i]{/};/]]
+}
+$document_root[^if(def $env:DOCUMENT_ROOT){$env:DOCUMENT_ROOT}{$script_dir}]
+#end @auto[]
+
+
+
+
+###########################################################################
+# trim leading and trailing chars $char (spaces by default)
+@trim[str;char][chr;tbl]
+^if(def $str){
+	$chr[^if(def $char){$char}{\s}]
+	$str[^str.match[^^$chr*][]{}]
+	$tbl[^str.match[^^(.*[^^$chr])$chr*^$]]
+	$result[$tbl.1]
+}{
+	$result[]
+}
+#end @trim[]
+
+
+
+###########################################################################
+@check_dir[dir]
+^if(def $dir && -d $dir){каталог существует}{^error[каталога не существует]}
+#end @check_dir[]
+
+
+
+###########################################################################
+# get relative path to file
+@get_relative_path[from;to][ff;tt;f;t;p;up;ne;pos;i;down]
+$ff[^trim[^from.match[\\][g]{/};/]]
+$tt[^trim[^to.match[\\][g]{/};/]]
+$f[^ff.lsplit[/]]
+$t[^tt.lsplit[/]]
+
+$p[]
+$up[/]
+$ne(0)
+$pos(0)
+^for[i](1;^f.count[]){
+	^if(!$ne && $f.piece eq $t.piece){
+		$p[${p}$f.piece/]
+		$pos($i)
+	}{
+		$ne($i)
+		$up[${up}../]
+	}
+	^f.offset(1)
+	^t.offset(1)
+}
+$down[]
+^for[i]($pos;^t.count[]-1){
+	^t.offset[set]($i)
+	$down[${down}$t.piece^if($i != ^t.count[]-1){/}]
+}
+$result[${up}$down]
+#end @get_relative_path[]
+
+
+
+###########################################################################
+# override unhandled_exception for show parser error (if occur) in this test
+@unhandled_exception[exception;stack]
+$response:status(500)
+<html>
+<head><title>Unhandled Exception</title></head>
+<body>
+<H1>Unhandled Exception</H1>
+<pre>^taint[html][$exception.comment]</pre>
+^if(def $exception.source){
+	<b>$exception.source</b><br>
+	<pre>^taint[html][$exception.file^($exception.lineno^)]</pre>
+}
+^if(def $exception.type){exception.type=$exception.type}
+^if($stack){
+	<hr />
+	^stack.menu{<tt>$stack.name</tt> $stack.file^($stack.lineno^)<br>}
+}
+#for [x] MSIE friendly
+<span style="font-size:1px">^for[i](0;512/7){&nbsp^;}</span>
+</body>
+#end @unhandled_exception[]
+
+
+
+###########################################################################
+@printDate[dtDate]
+$result[^if($dtDate is "date"){$dtDate.day/$dtDate.month/$dtDate.year}]
+#end @printDate[dt]
+
+
+
+###########################################################################
+@printTable[tTable;sTableWidth][tCols;sColumnWidth]
+^if($tTable is "table" && $tTable){
+	<table cellpadding="3" cellspacing="0" border="1"^if(def $sTableWidth){ width="$sTableWidth"}>
+	$tCols[^tTable.columns[]]
+	$sColumnWidth[^eval(100/(^tCols.count[]+1))[%d]]
+	<tr>
+		<th width="^eval(100-$sColumnWidth*^tCols.count[])%">строка</th>
+		^tCols.menu{<th width="$sColumnWidth%">$tCols.column</th>}
+	</tr>
+	^tTable.menu{
+		<tr>
+			<td>^tTable.line[]</td>
+			^tCols.menu{<td>$tTable.[$tCols.column]</td>}
+		</tr>
+	}
+	</table>
+}
+#end @printTable[]
+
+
+
+###########################################################################
+@update_pattern[text]
+^if(def $text){
+	$result[^text.match[(\\|\.)][g]{\$match.1}]
+}{
+	$result[]
+}
+#end @update_pattern[]
+
+
+
+###########################################################################
+@error[text]
+$result[<b style="color:red">$text</b>]
+#end @error[]
+
+
+
+###########################################################################
+@info[text]
+$result[<b>$text</b>]
+#end @info[]
+
+
+
+###########################################################################
+# use postprocess for cut paths and don't show them to everyones
+@postprocess[sBody]
+$result[$sBody]
+^if(def $sqldriversdir){$result[^result.match[^update_pattern[$sqldriversdir]][gi]{^$sqldriversdir}]}
+^if(def $charsetsdir){$result[^result.match[^update_pattern[$charsetsdir]][gi]{^$charsetsdir}]}
+^if(def $document_root){$result[^result.match[^update_pattern[$document_root]][gi]{закоментируйте postprocess чтобы увидеть}]}
+^if(def $script_dir){$result[^result.match[^update_pattern[$script_dir]][gi]{закоментируйте postprocess чтобы увидеть}]}
+#end @postprocess[]
+
+
+
+###########################################################################
+# check file
+@check_system_file[path][relative_path;file_stat;path_drive;root_drive]
+^if(def $path){
+	$path_drive[^get_drive_letter[$path]]
+	^if(^path.left(1) ne "/" && !^path.match[^^[a-z]:\\][i]){
+		$result[относительный путь. ^info[проверка невозможна]]
+	}{
+		^if(def $path_drive && $path_drive ne ^get_drive_letter[$document_root]){
+			$result[^info[на другом диске, проверка невозможна]]
+		}{
+			^rem{ *** path начинается с X:\\ - пути win, case insensitive *** }
+			$path[^path.match[^^[a-z]:\\(.+)][i]{^match.1.lower[]}]
+	
+			$relative_path[^get_relative_path[$document_root;$path]]
+			^if(-f $relative_path){
+				^try{
+					$file_stat[^file::stat[$relative_path]]
+					$result[^if(!$file_stat.size){^error[$file_stat.size байт]}{$file_stat.size байт}]
+				}{
+					$exception.handled(1)
+					$result[найден, но ^error[не доступен]]
+				}
+			}{
+				$result[^error[не найден]]
+			}
+		}
+	}
+}{
+	$result[]
+}
+#end @check_system_file[]
+
+
+
+###########################################################################
+@get_drive_letter[sPath]
+$result[]
+^sPath.match[^^([a-z]):(?:\\|/).+][i]{$result[^match.1.lower[]]}
+#end @get_drive_letter[]
+
+
+
+###########################################################################
+# check parser3 sql lib name (many people write path to sql client lib but not parser3 lib)
+@check_p3_sql_lib_name[sFile;sPattern][tPart]
+$result(1)
+^if(def $sFile){
+	$tPart[^sFile.rsplit[/]]
+	^if(!^tPart.piece.match[$sPattern]){$result(0)}
+}
+#end @check_p3_sql_lib_name[]
+
+
+
+###########################################################################
+@try_exec[jCode;sErrorInfo]
+^try{
+	$result[$jCode]
+}{
+	$exception.handled(1)
+	$result[^error[^if(def $sErrorInfo){$sErrorInfo}{Используемая версия Parser 3 не имеет данной возможности.}]]
+}
+#end @try_exec[]
+#--> Для того, чтобы данный тест заработал, в качестве обработчика документов с данным расширением должен быть установлен parser3, чего сейчас не наблюдается. #

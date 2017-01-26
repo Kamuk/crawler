@@ -1,0 +1,24 @@
+<div class="filling"> 
+			^form_tag[
+				$.controller[crawler]
+				$.action[index]
+			][
+				$.method[post]
+			]{
+
+				<div>
+					^label[link;Ссылка на главную страницу сайта]
+					^text_field[url;][
+						$.class[form-control]
+					]
+
+					^hidden_field[Send;1] 
+				</div> 
+				<div>
+					^submit_tag[Send][
+						$.name[post]
+						$.class[btn btn-success]
+					]
+				</div>  			
+			}
+</div> 

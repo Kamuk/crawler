@@ -1,0 +1,46 @@
+<tr>
+	<td>
+		$log.command
+	</td>
+	<td style="padding-left: ^eval($indent * 15)px; max-width: 50%;">
+		^taint[html][$log.msg]
+		^if($log.params){
+			^log.params.foreach[name;value]{
+				<div>
+					${name}: ^inspect[$value]
+				</div>
+			}
+		}
+	</td>
+	<td style="text-align: right;">
+		^eval($stat.time)[$FORMAT]
+		<div style="width: 50px; float: right; text-align: right; margin-right: 10px;">^num_format_sign(($profile.time) * 1000)[%.1f]</div>
+	</td>
+	<td style="text-align: right;">
+		^eval($stat.utime)[$FORMAT]
+		<div style="width: 50px; float: right; text-align: right; margin-right: 10px;">^num_format_sign(($profile.utime) * 1000)[%.1f]</div>
+	</td>
+	<td style="text-align: right;">
+		^eval($stat.stime)[$FORMAT]
+		<div style="width: 50px; float: right; text-align: right; margin-right: 10px;">^num_format_sign(($profile.stime) * 1000)[%.1f]</div>
+	</td>
+	<td style="text-align: right;">
+		^eval($stat.memory_block)[%.d]
+	</td>
+	<td style="text-align: right;">
+		^eval($stat.memory / 1024)[%.2f]
+		<div style="width: 60px; float: right; text-align: right; margin-right: 10px;">^num_format_sign(($profile.memory) / 1024)[%.2f]</div>
+	</td>
+	<td style="text-align: right;">
+		^eval($stat.memory_free / 1024)[%.2f]
+		<div style="width: 60px; float: right; text-align: right; margin-right: 10px;">^num_format_sign(($profile.memory_free) / 1024)[%.2f]</div>
+	</td>
+	<td style="text-align: right;">
+		^eval(($stat.memory_used + $stat.memory_free) / 1024)[%.2f]
+		<div style="width: 60px; float: right; text-align: right; margin-right: 10px;">^num_format_sign(($profile.memory_used + $profile.memory_free) / 1024)[%.2f]</div>
+	</td>
+	<td style="text-align: right;">
+		^inspect($log.logs)
+#		^print_diff(($profile.memory - ^log_calculate_diff[$log]) / 1024)[%.2f]
+	</td>
+</tr>

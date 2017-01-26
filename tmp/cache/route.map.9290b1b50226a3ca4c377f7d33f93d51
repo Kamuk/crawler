@@ -1,0 +1,10 @@
+{
+	"name":"",
+	"namespace":null,
+	"routing":{
+		"0":{
+	"pattern":"\/:controller\/:action\/:id.:format",
+	"params":{}
+}
+	}
+}

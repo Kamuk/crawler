@@ -1,0 +1,17 @@
+{
+	"name":"",
+	"namespace":null,
+	"routing":{
+		"0":{
+	"pattern":"\/:controller\/:action\/:id.:format",
+	"params":{}
+},
+		"1":{
+	"name":"root",
+	"pattern":"",
+	"params":{
+		"controller":"crawler"
+	}
+}
+	}
+}

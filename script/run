@@ -1,0 +1,3 @@
+#!/bin/sh
+
+../cgi/parser3.cgi $1 $2 $3 $4

@@ -1,0 +1,16 @@
+# assign parser as .html pages handler:
+AddHandler parsed-html html
+Action parsed-html /cgi-glob/parser3.exe
+
+DirectoryIndex index.html _dispatcher.html
+
+ErrorDocument 403 /403.html
+ErrorDocument 404 /404.html
+
+
+RewriteEngine on
+
+RewriteCond	%{REQUEST_FILENAME}	!-f
+RewriteCond	%{REQUEST_FILENAME}	!-d
+RewriteCond %{REQUEST_FILENAME} !^/(js|css|fonts|ico|off-line)/.*
+RewriteRule (.*)  /_dispatcher.html?_request=/$1  [L,QSA]

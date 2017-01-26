@@ -1,0 +1,16 @@
+$stat[$log.stat]
+$profile[$log.profile]
+
+#^if(!^log.command.match[^^(render)\.?]){
+	^include[${CONFIG:sProfilingPath}/_item.phtml]
+#}
+
+^if($log.logs){
+	$indent($indent + 1)
+
+	^foreach[$log.logs;log]{
+		^include[${CONFIG:sProfilingPath}/_log.phtml]
+	}
+	
+	$indent($indent - 1)
+}
